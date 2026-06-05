@@ -1,0 +1,177 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #fafaf8;
+  --bg-secondary: #f2f0ec;
+  --bg-tertiary: #e8e5df;
+  --bg-card: #ffffff;
+
+  --brand-primary: #1b6b5a;
+  --brand-primary-hover: #15574a;
+  --brand-primary-light: #e6f4f0;
+  --brand-primary-muted: #b8ddd3;
+  --brand-secondary: #c4956a;
+  --brand-secondary-light: #fbf3ec;
+  --brand-accent: #d4a853;
+
+  --success: #2d8a56;
+  --success-light: #e8f5ed;
+  --warning: #c4882d;
+  --warning-light: #fff6e8;
+  --danger: #c4453a;
+  --danger-light: #fceae8;
+  --info: #3a7fc4;
+  --info-light: #e8f0fb;
+
+  --text-primary: #1a1a18;
+  --text-secondary: #5c5a55;
+  --text-tertiary: #8a8780;
+  --text-inverse: #fafaf8;
+  --text-brand: #1b6b5a;
+
+  --partner-a: #1b6b5a;
+  --partner-b: #c4956a;
+  --partner-shared: #7c6daf;
+
+  --border: #e2dfd9;
+  --border-focus: #1b6b5a;
+  --divider: #ece9e3;
+
+  --shadow-sm: 0 1px 2px rgba(26, 26, 24, 0.05);
+  --shadow-md: 0 4px 12px rgba(26, 26, 24, 0.08);
+  --shadow-lg: 0 12px 32px rgba(26, 26, 24, 0.1);
+}
+
+@theme inline {
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
+
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-card: var(--bg-card);
+
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-primary-light: var(--brand-primary-light);
+  --color-brand-primary-muted: var(--brand-primary-muted);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-light: var(--brand-secondary-light);
+  --color-brand-accent: var(--brand-accent);
+
+  --color-success: var(--success);
+  --color-success-light: var(--success-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
+  --color-danger: var(--danger);
+  --color-danger-light: var(--danger-light);
+  --color-info: var(--info);
+  --color-info-light: var(--info-light);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-inverse: var(--text-inverse);
+  --color-text-brand: var(--text-brand);
+
+  --color-partner-a: var(--partner-a);
+  --color-partner-b: var(--partner-b);
+  --color-partner-shared: var(--partner-shared);
+
+  --color-border: var(--border);
+  --color-border-focus: var(--border-focus);
+  --color-divider: var(--divider);
+
+  --font-sans: var(--font-dm-sans), sans-serif;
+  --font-display: var(--font-fraunces), serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+
+  --radius-card: 12px;
+  --radius-input: 10px;
+  --radius-pill: 20px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+}
+
+.dark {
+  --bg-primary: #131311;
+  --bg-secondary: #1c1b18;
+  --bg-tertiary: #252420;
+  --bg-card: #1e1d1a;
+
+  --brand-primary: #3dbea6;
+  --brand-primary-hover: #4dcfb6;
+  --brand-primary-light: #1a2f2a;
+  --brand-primary-muted: #1f3d35;
+  --brand-secondary: #d4a87a;
+  --brand-secondary-light: #2a2218;
+  --brand-accent: #e4bd6d;
+
+  --success: #4aba73;
+  --success-light: #1a2e20;
+  --warning: #d4a24a;
+  --warning-light: #2e2515;
+  --danger: #e06b60;
+  --danger-light: #2e1a18;
+  --info: #5a9fe4;
+  --info-light: #1a2530;
+
+  --text-primary: #edece8;
+  --text-secondary: #a5a29b;
+  --text-tertiary: #706d66;
+  --text-inverse: #131311;
+  --text-brand: #3dbea6;
+
+  --partner-a: #3dbea6;
+  --partner-b: #d4a87a;
+  --partner-shared: #9b8dd4;
+
+  --border: #2e2d28;
+  --border-focus: #3dbea6;
+  --divider: #252420;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+body {
+  min-height: 100%;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-dm-sans), sans-serif;
+}
+
+.value-display {
+  font-family: var(--font-fraunces), serif;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.card-surface {
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--bg-tertiary) 0%, var(--bg-secondary) 45%, var(--bg-tertiary) 100%);
+  background-size: 200% 100%;
+  animation: wee-shimmer 1.4s linear infinite;
+}
+
+@keyframes wee-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
