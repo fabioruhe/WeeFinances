@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuthUser } from "@/lib/session";
+import type { AssetType } from "@prisma/client";
 
 const CreateAssetSchema = z.object({
   nome: z.string().min(2).max(100),
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       coupleId: isCouple ? coupleId : null,
       nome,
-      tipo,
+      tipo: tipo as AssetType,
       instituicao: instituicao ?? null,
       ticker: ticker ?? null,
       valorAtual: valor_atual,
