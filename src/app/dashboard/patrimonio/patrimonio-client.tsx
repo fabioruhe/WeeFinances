@@ -7,6 +7,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
 } from "recharts";
 import { Plus, TrendingUp, TrendingDown, Wallet, Landmark, BarChart3, Shield } from "lucide-react";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/toast";
 import {
   fetchPatrimonio, listAssets, createAsset, deleteAsset, updateAsset,
@@ -23,7 +24,7 @@ function fmtPct(v: number) {
 }
 
 const ASSET_TYPES: AssetType[] = [
-  "RENDA_FIXA", "RENDA_VARIAVEL", "FUNDO", "IMOVEL",
+  "RENDA_FIXA", "RENDA_VARIAVEL", "FUNDO", "FII", "IMOVEL",
   "VEICULO", "CRIPTO", "PREVIDENCIA", "POUPANCA", "OUTRO",
 ];
 
@@ -72,7 +73,7 @@ export function PatrimonioClient() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState("");
+  const [editValue, setEditValue] = useState(0);
 
   const load = useCallback(async () => {
     const [sRes, aRes] = await Promise.all([fetchPatrimonio(), listAssets()]);
@@ -114,9 +115,8 @@ export function PatrimonioClient() {
   };
 
   const handleInlineUpdate = async (id: string) => {
-    const val = parseFloat(editValue);
-    if (isNaN(val) || val < 0) return;
-    const res = await updateAsset(id, { valor_atual: val });
+    if (editValue < 0) return;
+    const res = await updateAsset(id, { valor_atual: editValue });
     if (res.ok) {
       setEditingId(null);
       load();
@@ -248,12 +248,22 @@ export function PatrimonioClient() {
               style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
             <input name="ticker" placeholder="Ticker (opcional)" className="px-3 py-2 rounded-lg text-sm"
               style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
-            <input name="valor_atual" type="number" step="0.01" min="0" placeholder="Valor atual" required
-              className="px-3 py-2 rounded-lg text-sm"
-              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
-            <input name="valor_investido" type="number" step="0.01" min="0" placeholder="Valor investido" required
-              className="px-3 py-2 rounded-lg text-sm"
-              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Valor atual</label>
+              <input name="valor_atual" type="hidden" id="valor_atual_hidden" />
+              <CurrencyInput value={0} onChange={(v) => {
+                const el = document.getElementById("valor_atual_hidden") as HTMLInputElement;
+                if (el) el.value = String(v);
+              }} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Valor investido</label>
+              <input name="valor_investido" type="hidden" id="valor_investido_hidden" />
+              <CurrencyInput value={0} onChange={(v) => {
+                const el = document.getElementById("valor_investido_hidden") as HTMLInputElement;
+                if (el) el.value = String(v);
+              }} />
+            </div>
             <div className="col-span-2 flex gap-2 justify-end">
               <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-sm"
                 style={{ color: "var(--text-secondary)" }}>Cancelar</button>
@@ -282,19 +292,16 @@ export function PatrimonioClient() {
                 </div>
                 <div className="text-right">
                   {editingId === a.id ? (
-                    <div className="flex gap-1">
-                      <input type="number" step="0.01" value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleInlineUpdate(a.id)}
-                        className="w-28 px-2 py-1 rounded text-sm text-right"
-                        style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                        autoFocus />
+                    <div className="flex gap-1 items-center">
+                      <div className="w-36">
+                        <CurrencyInput value={editValue} onChange={setEditValue} />
+                      </div>
                       <button onClick={() => handleInlineUpdate(a.id)} className="text-xs px-2 py-1 rounded"
                         style={{ background: "var(--brand-primary)", color: "#fff" }}>OK</button>
                     </div>
                   ) : (
                     <p className="text-sm font-semibold cursor-pointer" style={{ color: "var(--text-primary)" }}
-                      onClick={() => { setEditingId(a.id); setEditValue(String(a.valorAtual)); }}>
+                      onClick={() => { setEditingId(a.id); setEditValue(a.valorAtual); }}>
                       {fmt(a.valorAtual)}
                     </p>
                   )}

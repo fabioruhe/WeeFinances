@@ -10,6 +10,7 @@ import {
   CreditCard,
   ClipboardCheck,
   Landmark,
+  Wallet,
   BarChart3,
   Settings,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const TABS = [
   { href: "/dashboard/dividas", label: "Dívidas", icon: CreditCard },
   { href: "/dashboard/checkin", label: "Check-in", icon: ClipboardCheck },
   { href: "/dashboard/patrimonio", label: "Patrimônio", icon: Landmark },
+  { href: "/dashboard/contas", label: "Contas", icon: Wallet },
   { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { href: "/dashboard/config", label: "Config", icon: Settings },
 ];

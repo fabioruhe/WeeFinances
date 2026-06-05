@@ -18,6 +18,7 @@ import {
 import * as LucideIcons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import {
   getBudgets,
   upsertBudgets,
@@ -265,24 +266,16 @@ function SugestaoModal({ result, mes, onConfirm, onClose, saving }: SugestaoModa
                         <span className="flex-1 text-sm truncate" style={{ color: "var(--text-secondary)" }}>
                           {s.categoriaNome}
                         </span>
-                        <div
-                          className="flex items-center rounded-lg px-2 py-1"
-                          style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
-                        >
-                          <span className="text-xs mr-1" style={{ color: "var(--text-tertiary)" }}>R$</span>
-                          <input
-                            type="number"
-                            min="0"
-                            step="10"
+                        <div className="w-32">
+                          <CurrencyInput
                             value={values[s.categoriaId] ?? s.limiteSugerido}
-                            onChange={(e) =>
+                            onChange={(v) =>
                               setValues((prev) => ({
                                 ...prev,
-                                [s.categoriaId]: parseFloat(e.target.value) || 0,
+                                [s.categoriaId]: v,
                               }))
                             }
-                            className="w-20 text-right text-sm font-medium bg-transparent outline-none"
-                            style={{ color: "var(--text-primary)" }}
+                            className="h-8 w-full rounded-lg border border-border bg-bg-secondary py-1 pl-8 pr-2 text-sm font-medium text-text-primary text-right outline-none transition focus:border-border-focus"
                           />
                         </div>
                       </div>
@@ -340,7 +333,7 @@ type CategoriaRowProps = {
 
 function CategoriaRow({ item, mes, onSaved }: CategoriaRowProps) {
   const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(String(item.limite ?? ""));
+  const [value, setValue] = useState(item.limite ?? 0);
   const [saving, setSaving] = useState(false);
   const { pushToast } = useToast();
 
@@ -348,11 +341,11 @@ function CategoriaRow({ item, mes, onSaved }: CategoriaRowProps) {
   const hasBudget = item.limite !== null;
 
   const handleSave = async () => {
-    const limite = parseFloat(value);
-    if (isNaN(limite) || limite < 0) {
+    if (value < 0) {
       pushToast({ title: "Valor inválido", type: "error" });
       return;
     }
+    const limite = value;
     setSaving(true);
     const res = await upsertBudgets([
       { categoriaId: item.categoria.id, limiteMensal: limite, mesReferencia: mes },
@@ -370,7 +363,7 @@ function CategoriaRow({ item, mes, onSaved }: CategoriaRowProps) {
     if (e.key === "Enter") handleSave();
     if (e.key === "Escape") {
       setEditing(false);
-      setValue(String(item.limite ?? ""));
+      setValue(item.limite ?? 0);
     }
   };
 
@@ -414,21 +407,11 @@ function CategoriaRow({ item, mes, onSaved }: CategoriaRowProps) {
         {/* Botão editar / campos */}
         {editing ? (
           <div className="flex items-center gap-1 shrink-0">
-            <div
-              className="flex items-center rounded-lg px-2 py-1"
-              style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-focus)" }}
-            >
-              <span className="text-xs mr-1" style={{ color: "var(--text-tertiary)" }}>R$</span>
-              <input
-                autoFocus
-                type="number"
-                min="0"
-                step="10"
+            <div className="w-32">
+              <CurrencyInput
                 value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="w-20 text-right text-sm font-medium bg-transparent outline-none"
-                style={{ color: "var(--text-primary)" }}
+                onChange={setValue}
+                className="h-8 w-full rounded-lg border border-border-focus bg-bg-secondary py-1 pl-8 pr-2 text-sm font-medium text-text-primary text-right outline-none transition focus:border-border-focus"
               />
             </div>
             <button
@@ -444,7 +427,7 @@ function CategoriaRow({ item, mes, onSaved }: CategoriaRowProps) {
               )}
             </button>
             <button
-              onClick={() => { setEditing(false); setValue(String(item.limite ?? "")); }}
+              onClick={() => { setEditing(false); setValue(item.limite ?? 0); }}
               className="w-7 h-7 rounded-lg flex items-center justify-center"
               style={{ background: "var(--bg-secondary)" }}
             >
@@ -453,7 +436,7 @@ function CategoriaRow({ item, mes, onSaved }: CategoriaRowProps) {
           </div>
         ) : (
           <button
-            onClick={() => { setEditing(true); setValue(String(item.limite ?? "")); }}
+            onClick={() => { setEditing(true); setValue(item.limite ?? 0); }}
             className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-opacity hover:opacity-70"
             style={{ background: "var(--bg-secondary)" }}
           >

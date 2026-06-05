@@ -6,7 +6,7 @@ import { requireAuthUser } from "@/lib/session";
 const CreateAssetSchema = z.object({
   nome: z.string().min(2).max(100),
   tipo: z.enum([
-    "RENDA_FIXA", "RENDA_VARIAVEL", "FUNDO", "IMOVEL",
+    "RENDA_FIXA", "RENDA_VARIAVEL", "FUNDO", "FII", "IMOVEL",
     "VEICULO", "CRIPTO", "PREVIDENCIA", "POUPANCA", "OUTRO",
   ]),
   instituicao: z.string().max(100).optional().nullable(),

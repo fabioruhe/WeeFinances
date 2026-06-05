@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getSession } from "next-auth/react";
 import { OnboardingStepper } from "@/components/onboarding/stepper";
 
 type ContextData = {
@@ -83,7 +84,13 @@ function RendaContent() {
         router.push("/onboarding/divisao");
       } else {
         // Modo solo → completa onboarding
-        await fetch("/api/onboarding/complete", { method: "POST" });
+        const completeRes = await fetch("/api/onboarding/complete", { method: "POST" });
+        if (!completeRes.ok) {
+          setError("Erro ao finalizar. Tente novamente.");
+          setLoading(false);
+          return;
+        }
+        await getSession(); // força refresh do JWT cookie
         window.location.href = "/dashboard";
       }
     } catch {
@@ -178,6 +185,23 @@ function RendaContent() {
             {loading ? "Salvando…" : "Continuar →"}
           </button>
         </form>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={async () => {
+            setLoading(true);
+            try {
+              const res = await fetch("/api/onboarding/complete", { method: "POST" });
+              if (!res.ok) { setError("Erro ao finalizar."); setLoading(false); return; }
+              await getSession();
+              window.location.href = "/dashboard";
+            } catch { setError("Erro de rede."); setLoading(false); }
+          }}
+          className="w-full text-center text-sm text-text-tertiary hover:text-text-secondary transition"
+        >
+          Pular esta etapa
+        </button>
       </div>
 
       <p className="text-center text-xs text-text-tertiary">

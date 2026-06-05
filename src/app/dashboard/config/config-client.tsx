@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Crown, HeartHandshake, History, Loader2 } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { Crown, HeartHandshake, History, Loader2, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -252,6 +253,17 @@ export function ConfigClient() {
             Historico read-only
           </Link>
         </div>
+      </section>
+
+      {/* Sair */}
+      <section className="card-surface p-5">
+        <button
+          onClick={() => signOut({ callbackUrl: "/auth/login" })}
+          className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-80"
+          style={{ color: "var(--danger)" }}>
+          <LogOut size={16} />
+          Sair da conta
+        </button>
       </section>
     </main>
   );

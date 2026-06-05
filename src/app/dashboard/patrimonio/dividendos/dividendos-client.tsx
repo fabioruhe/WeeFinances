@@ -6,6 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import { Plus, ArrowLeft, TrendingUp, Calendar } from "lucide-react";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/toast";
 import {
   listDividends, createDividend, fetchDividendSummary, listAssets,
@@ -191,9 +192,14 @@ export function DividendosClient() {
         {showForm && (
           <form onSubmit={handleCreate} className="grid grid-cols-2 gap-3 mb-4 p-4 rounded-xl"
             style={{ background: "var(--bg-secondary)" }}>
-            <input name="valor" type="number" step="0.01" min="0.01" placeholder="Valor" required
-              className="px-3 py-2 rounded-lg text-sm"
-              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-tertiary)" }}>Valor</label>
+              <input name="valor" type="hidden" id="dividend_valor_hidden" />
+              <CurrencyInput value={0} onChange={(v) => {
+                const el = document.getElementById("dividend_valor_hidden") as HTMLInputElement;
+                if (el) el.value = String(v);
+              }} />
+            </div>
             <input name="mes_referencia" type="month" defaultValue={defaultMes} required
               className="px-3 py-2 rounded-lg text-sm"
               style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)" }} />

@@ -119,17 +119,13 @@ export function ProjecaoClient() {
         </p>
       )}
 
-      {/* Sliders */}
+      {/* Inputs */}
       <div className="rounded-2xl p-5 grid grid-cols-1 sm:grid-cols-2 gap-5"
         style={{ background: "var(--bg-card)", border: "1px solid var(--border)", boxShadow: "var(--shadow-md)" }}>
-        <SliderField label="Valor inicial" value={valorInicial} onChange={setValorInicial}
-          min={0} max={5_000_000} step={1000} format={fmt} />
-        <SliderField label="Aporte mensal" value={aporteMensal} onChange={setAporteMensal}
-          min={0} max={50_000} step={100} format={fmt} />
-        <SliderField label="Taxa anual (%)" value={taxaAnual} onChange={setTaxaAnual}
-          min={0} max={30} step={0.5} format={(v) => `${v.toFixed(1)}%`} />
-        <SliderField label="Horizonte (anos)" value={anosProjecao} onChange={setAnosProjecao}
-          min={1} max={50} step={1} format={(v) => `${v} anos`} />
+        <CurrencyField label="Valor inicial" value={valorInicial} onChange={setValorInicial} />
+        <CurrencyField label="Aporte mensal" value={aporteMensal} onChange={setAporteMensal} />
+        <NumberField label="Taxa anual" value={taxaAnual} onChange={setTaxaAnual} suffix="%" step={0.5} min={0} max={100} />
+        <NumberField label="Horizonte" value={anosProjecao} onChange={setAnosProjecao} suffix="anos" step={1} min={1} max={50} />
       </div>
 
       {/* Resumo */}
@@ -212,19 +208,72 @@ export function ProjecaoClient() {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function SliderField({ label, value, onChange, min, max, step, format }: {
+function formatCurrencyDisplay(value: number): string {
+  return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parseCurrencyInput(raw: string): number {
+  const digits = raw.replace(/\D/g, "");
+  return Number(digits) / 100;
+}
+
+function CurrencyField({ label, value, onChange }: {
   label: string; value: number; onChange: (v: number) => void;
-  min: number; max: number; step: number; format: (v: number) => string;
+}) {
+  const [display, setDisplay] = useState(formatCurrencyDisplay(value));
+
+  useEffect(() => {
+    setDisplay(formatCurrencyDisplay(value));
+  }, [value]);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value.replace(/\D/g, "");
+    if (!raw) { setDisplay(""); onChange(0); return; }
+    const num = parseCurrencyInput(raw);
+    setDisplay(formatCurrencyDisplay(num));
+    onChange(num);
+  }
+
+  return (
+    <div>
+      <label className="text-xs font-medium mb-1.5 block" style={{ color: "var(--text-tertiary)" }}>{label}</label>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>R$</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={display}
+          onChange={handleChange}
+          placeholder="0,00"
+          className="h-10 w-full rounded-[10px] border border-border bg-bg-card py-2 pl-10 pr-3 text-sm font-medium text-text-primary outline-none transition focus:border-border-focus"
+        />
+      </div>
+    </div>
+  );
+}
+
+function NumberField({ label, value, onChange, suffix, step, min, max }: {
+  label: string; value: number; onChange: (v: number) => void;
+  suffix: string; step: number; min: number; max: number;
 }) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium" style={{ color: "var(--text-tertiary)" }}>{label}</span>
-        <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{format(value)}</span>
+      <label className="text-xs font-medium mb-1.5 block" style={{ color: "var(--text-tertiary)" }}>{label}</label>
+      <div className="relative">
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            if (v >= min && v <= max) onChange(v);
+          }}
+          step={step}
+          min={min}
+          max={max}
+          className="h-10 w-full rounded-[10px] border border-border bg-bg-card px-3 pr-14 text-sm font-medium text-text-primary outline-none transition focus:border-border-focus"
+        />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: "var(--text-tertiary)" }}>{suffix}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-[var(--brand-primary)]" />
     </div>
   );
 }

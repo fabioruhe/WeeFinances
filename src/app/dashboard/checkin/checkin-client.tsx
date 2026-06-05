@@ -5,6 +5,7 @@ import { Loader2, ChevronLeft, ChevronRight, PartyPopper, Star, TrendingUp, Aler
 import confetti from "canvas-confetti";
 import Link from "next/link";
 import { useToast } from "@/components/ui/toast";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { OnboardingStepper } from "@/components/onboarding/stepper";
 import {
   fetchCheckinPreview,
@@ -739,23 +740,17 @@ function StepAjustes({
                   <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>
                     Novo limite:
                   </span>
-                  <input
-                    type="number"
-                    value={state.novoLimite}
-                    onChange={(e) =>
-                      updateAjuste(cat.categoriaId, {
-                        novoLimite: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    min={0}
-                    step={50}
-                    className="w-28 px-2 py-1 rounded text-sm"
-                    style={{
-                      background: "var(--bg-primary)",
-                      border: "1px solid var(--border)",
-                      color: "var(--text-primary)",
-                    }}
-                  />
+                  <div className="w-32">
+                    <CurrencyInput
+                      value={state.novoLimite}
+                      onChange={(v) =>
+                        updateAjuste(cat.categoriaId, {
+                          novoLimite: v,
+                        })
+                      }
+                      className="h-8 w-full rounded-lg border border-border bg-bg-primary py-1 pl-8 pr-2 text-sm font-medium text-text-primary outline-none transition focus:border-border-focus"
+                    />
+                  </div>
                 </div>
               )}
             </div>

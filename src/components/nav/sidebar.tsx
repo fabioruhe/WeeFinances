@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -10,8 +11,10 @@ import {
   CreditCard,
   ClipboardCheck,
   Landmark,
+  Wallet,
   BarChart3,
   Settings,
+  LogOut,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -22,6 +25,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/dividas", label: "Dívidas", icon: CreditCard },
   { href: "/dashboard/checkin", label: "Check-in", icon: ClipboardCheck },
   { href: "/dashboard/patrimonio", label: "Patrimônio", icon: Landmark },
+  { href: "/dashboard/contas", label: "Contas", icon: Wallet },
   { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { href: "/dashboard/config", label: "Config", icon: Settings },
 ];
@@ -64,6 +68,17 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Logout */}
+      <div className="px-3 py-4 border-t" style={{ borderColor: "var(--border)" }}>
+        <button
+          onClick={() => signOut({ callbackUrl: "/auth/login" })}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full transition-colors hover:opacity-80"
+          style={{ color: "var(--text-tertiary)" }}>
+          <LogOut size={18} />
+          Sair
+        </button>
+      </div>
     </aside>
   );
 }

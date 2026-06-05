@@ -3,7 +3,7 @@ import { apiRequest } from "@/lib/api-client";
 // ─── Asset Types ────────────────────────────────────────────────────────────
 
 export type AssetType =
-  | "RENDA_FIXA" | "RENDA_VARIAVEL" | "FUNDO" | "IMOVEL"
+  | "RENDA_FIXA" | "RENDA_VARIAVEL" | "FUNDO" | "FII" | "IMOVEL"
   | "VEICULO" | "CRIPTO" | "PREVIDENCIA" | "POUPANCA" | "OUTRO";
 
 export type AssetItem = {
@@ -273,6 +273,7 @@ export const ASSET_TYPE_LABEL: Record<AssetType, string> = {
   RENDA_FIXA: "Renda Fixa",
   RENDA_VARIAVEL: "Renda Variável",
   FUNDO: "Fundos",
+  FII: "Fundos Imobiliários",
   IMOVEL: "Imóveis",
   VEICULO: "Veículos",
   CRIPTO: "Cripto",
@@ -285,6 +286,7 @@ export const ASSET_TYPE_COLOR: Record<AssetType, string> = {
   RENDA_FIXA: "var(--brand-primary)",
   RENDA_VARIAVEL: "var(--brand-secondary)",
   FUNDO: "var(--partner-shared)",
+  FII: "#e67e22",
   IMOVEL: "var(--brand-accent)",
   VEICULO: "var(--warning, #f59e0b)",
   CRIPTO: "var(--info, #3b82f6)",

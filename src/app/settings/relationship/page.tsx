@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { apiRequest } from "@/lib/api-client";
 
 type ApiMessage = {
@@ -54,8 +55,8 @@ export default function RelationshipSettingsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [acceptCode, setAcceptCode] = useState("");
-  const [acceptIncome, setAcceptIncome] = useState("");
-  const [income, setIncome] = useState("");
+  const [acceptIncome, setAcceptIncome] = useState(0);
+  const [income, setIncome] = useState(0);
   const [unlinkReason, setUnlinkReason] = useState("");
   const [unlinkConfirmText, setUnlinkConfirmText] = useState("");
 
@@ -156,7 +157,7 @@ export default function RelationshipSettingsPage() {
     setLoadingAction("accept");
     setAcceptMessage(null);
 
-    const parsedIncome = acceptIncome.trim() ? Number(acceptIncome) : undefined;
+    const parsedIncome = acceptIncome > 0 ? acceptIncome : undefined;
     const result = await apiRequest<ActionResponse>(
       "/api/couple/invites/accept",
       {
@@ -192,7 +193,7 @@ export default function RelationshipSettingsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          monthlyIncome: Number(income),
+          monthlyIncome: income,
         }),
       },
       "Nao foi possivel salvar a renda.",
@@ -280,10 +281,9 @@ export default function RelationshipSettingsPage() {
             className="h-10 w-full rounded-[10px] border border-border bg-bg-card px-3 text-sm outline-none transition focus:border-border-focus"
             placeholder="Codigo de convite"
           />
-          <input
+          <CurrencyInput
             value={acceptIncome}
-            onChange={(event) => setAcceptIncome(event.target.value)}
-            className="h-10 w-full rounded-[10px] border border-border bg-bg-card px-3 text-sm outline-none transition focus:border-border-focus"
+            onChange={setAcceptIncome}
             placeholder="Sua renda mensal (opcional)"
           />
           <div className="flex flex-wrap gap-2">
@@ -319,10 +319,9 @@ export default function RelationshipSettingsPage() {
 
         <section className="card-surface space-y-4 p-5">
           <h2 className="text-lg font-semibold text-text-primary">Divisao proporcional</h2>
-          <input
+          <CurrencyInput
             value={income}
-            onChange={(event) => setIncome(event.target.value)}
-            className="h-10 w-full rounded-[10px] border border-border bg-bg-card px-3 text-sm outline-none transition focus:border-border-focus"
+            onChange={setIncome}
             placeholder="Informe sua renda mensal"
           />
           <Button onClick={saveIncome} disabled={!income || loadingAction !== null}>

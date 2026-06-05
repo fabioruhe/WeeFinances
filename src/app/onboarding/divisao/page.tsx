@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { getSession } from "next-auth/react";
 import { OnboardingStepper } from "@/components/onboarding/stepper";
 
 type DivisaoTipo = "PROPORCIONAL" | "IGUALITARIA" | "FIXA";
@@ -150,6 +151,7 @@ export default function DivisaoPage() {
         body: JSON.stringify({ divisaoTipo: selectedTipo }),
       });
       if (!res.ok) throw new Error();
+      await getSession(); // força refresh do JWT cookie
       window.location.href = "/dashboard";
     } catch {
       setError("Não foi possível salvar. Tente novamente.");
@@ -244,6 +246,23 @@ export default function DivisaoPage() {
           className="h-11 w-full rounded-[12px] bg-brand-primary text-sm font-semibold text-text-inverse transition hover:bg-brand-primary-hover disabled:opacity-60"
         >
           {saving ? "Salvando…" : "Confirmar e ir para o Dashboard →"}
+        </button>
+
+        <button
+          type="button"
+          disabled={saving}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              const res = await fetch("/api/onboarding/complete", { method: "POST" });
+              if (!res.ok) { setError("Erro ao finalizar."); setSaving(false); return; }
+              await getSession();
+              window.location.href = "/dashboard";
+            } catch { setError("Erro de rede."); setSaving(false); }
+          }}
+          className="w-full text-center text-sm text-text-tertiary hover:text-text-secondary transition"
+        >
+          Pular esta etapa
         </button>
       </div>
     </div>

@@ -53,9 +53,13 @@ export default function ModoPage() {
         </button>
       </div>
 
-      <p className="text-center text-xs text-text-tertiary">
-        Não se preocupe — você pode mudar isso depois em Configurações.
-      </p>
+      <button
+        type="button"
+        onClick={() => router.push("/onboarding/renda?mode=solo")}
+        className="w-full text-center text-sm text-text-tertiary hover:text-text-secondary transition"
+      >
+        Pular esta etapa
+      </button>
     </div>
   );
 }

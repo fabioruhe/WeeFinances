@@ -125,11 +125,20 @@ enum AssetType {
   RENDA_FIXA
   RENDA_VARIAVEL
   FUNDO
+  FII
   IMOVEL
   VEICULO
   CRIPTO
   PREVIDENCIA
   POUPANCA
+  OUTRO
+}
+
+enum BankAccountTipo {
+  CORRENTE
+  POUPANCA
+  INVESTIMENTO
+  CARTEIRA_DIGITAL
   OUTRO
 }
 
@@ -181,6 +190,7 @@ model User {
   assets             Asset[]
   dividendEntries    DividendEntry[]
   fixedExpenses      FixedExpense[]
+  bankAccounts       BankAccount[]
 
   @@index([coupleId])
 }
@@ -215,6 +225,7 @@ model Couple {
   assets          Asset[]
   dividendEntries DividendEntry[]
   fixedExpenses   FixedExpense[]
+  bankAccounts    BankAccount[]
   categories      Category[]
 
   @@index([userAId])
@@ -718,6 +729,30 @@ model FixedExpense {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   couple    Couple?  @relation(fields: [coupleId], references: [id], onDelete: SetNull)
   categoria Category @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([coupleId])
+}
+
+// ─── BankAccount ─────────────────────────────────────────────────────────────
+
+model BankAccount {
+  id        String          @id @default(uuid())
+  userId    String
+  coupleId  String?
+  nome      String
+  tipo      BankAccountTipo
+  banco     String
+  cor       String          @db.VarChar(7)
+  saldo     Decimal?        @db.Decimal(14, 2)
+  icone     String?
+  padrao    Boolean         @default(false)
+  ativo     Boolean         @default(true)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  couple Couple? @relation(fields: [coupleId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([coupleId])

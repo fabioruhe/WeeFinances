@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, X, Target, Loader2, Check, AlertTriangle, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
 import confetti from "canvas-confetti";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/toast";
 import {
   listGoals,
@@ -396,18 +397,17 @@ function ContribuirModal({
   onClose: () => void;
   onSuccess: (celebrar: boolean, metaAtualizada: GoalItem) => void;
 }) {
-  const [valor, setValor] = useState("");
+  const [valor, setValor] = useState(0);
   const [saving, setSaving] = useState(false);
   const { pushToast } = useToast();
 
   const handleSubmit = async () => {
-    const v = parseFloat(valor.replace(",", "."));
-    if (isNaN(v) || v <= 0) {
+    if (valor <= 0) {
       pushToast({ title: "Informe um valor válido", type: "error" });
       return;
     }
     setSaving(true);
-    const res = await contributeToGoal(meta.id, { valor: v });
+    const res = await contributeToGoal(meta.id, { valor });
     setSaving(false);
     if (res.ok) {
       const novoValorAtual = res.data.goal.valorAtual;
@@ -462,28 +462,11 @@ function ContribuirModal({
           <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
             Valor da contribuição
           </label>
-          <div
-            className="flex items-center rounded-xl px-3 py-3 gap-2"
-            style={{ background: "var(--bg-secondary)", border: "1.5px solid var(--border-focus)" }}
-          >
-            <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>R$</span>
-            <input
-              autoFocus
-              type="number"
-              min="0.01"
-              step="0.01"
-              placeholder="0,00"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              className="flex-1 bg-transparent outline-none text-base font-semibold"
-              style={{ color: "var(--text-primary)" }}
-            />
-          </div>
+          <CurrencyInput value={valor} onChange={setValor} />
           {/* Sugestão rápida */}
           {(meta.contribuicaoA ?? 0) + (meta.contribuicaoB ?? 0) > 0 && (
             <button
-              onClick={() => setValor(String((meta.contribuicaoA ?? 0) + (meta.contribuicaoB ?? 0)))}
+              onClick={() => setValor((meta.contribuicaoA ?? 0) + (meta.contribuicaoB ?? 0))}
               className="mt-2 text-xs px-2 py-1 rounded-lg"
               style={{ background: "var(--brand-primary-light)", color: "var(--brand-primary)" }}
             >
@@ -524,15 +507,15 @@ function NovaMetaModal({
 }) {
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState<GoalTipo>("OUTRO");
-  const [valorAlvo, setValorAlvo] = useState("");
+  const [valorAlvo, setValorAlvo] = useState(0);
   const [prazo, setPrazo] = useState("");
-  const [contribuicaoA, setContribuicaoA] = useState("");
-  const [contribuicaoB, setContribuicaoB] = useState("");
+  const [contribuicaoA, setContribuicaoA] = useState(0);
+  const [contribuicaoB, setContribuicaoB] = useState(0);
   const [saving, setSaving] = useState(false);
   const { pushToast } = useToast();
 
-  const contrib = (parseFloat(contribuicaoA) || 0) + (parseFloat(contribuicaoB) || 0);
-  const alvo = parseFloat(valorAlvo) || 0;
+  const contrib = contribuicaoA + contribuicaoB;
+  const alvo = valorAlvo;
   const projecaoTexto = alvo > 0 ? calcProjecaoTexto(0, alvo, contrib) : null;
 
   const nomeA = couple?.userANome ?? "Você";
@@ -553,8 +536,8 @@ function NovaMetaModal({
       valor_alvo: alvo,
       prazo: prazo || null,
       tipo,
-      contribuicao_a: parseFloat(contribuicaoA) || null,
-      contribuicao_b: parseFloat(contribuicaoB) || null,
+      contribuicao_a: contribuicaoA || null,
+      contribuicao_b: contribuicaoB || null,
     });
     setSaving(false);
     if (res.ok) {
@@ -641,21 +624,7 @@ function NovaMetaModal({
               <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
                 Valor alvo
               </label>
-              <div
-                className="flex items-center rounded-xl px-3 py-2.5 gap-1.5"
-                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
-              >
-                <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>R$</span>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="0"
-                  value={valorAlvo}
-                  onChange={(e) => setValorAlvo(e.target.value)}
-                  className="flex-1 bg-transparent outline-none text-sm font-semibold"
-                  style={{ color: "var(--text-primary)" }}
-                />
-              </div>
+              <CurrencyInput value={valorAlvo} onChange={setValorAlvo} />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
@@ -686,42 +655,14 @@ function NovaMetaModal({
                 <p className="text-[10px] mb-1 font-medium" style={{ color: "var(--partner-a)" }}>
                   {nomeA}
                 </p>
-                <div
-                  className="flex items-center rounded-xl px-3 py-2.5 gap-1.5"
-                  style={{ background: "var(--bg-secondary)", border: "1.5px solid var(--partner-a)" }}
-                >
-                  <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>R$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={contribuicaoA}
-                    onChange={(e) => setContribuicaoA(e.target.value)}
-                    className="flex-1 bg-transparent outline-none text-sm font-semibold"
-                    style={{ color: "var(--text-primary)" }}
-                  />
-                </div>
+                <CurrencyInput value={contribuicaoA} onChange={setContribuicaoA} />
               </div>
               {nomeB && (
                 <div>
                   <p className="text-[10px] mb-1 font-medium" style={{ color: "var(--partner-b)" }}>
                     {nomeB}
                   </p>
-                  <div
-                    className="flex items-center rounded-xl px-3 py-2.5 gap-1.5"
-                    style={{ background: "var(--bg-secondary)", border: "1.5px solid var(--partner-b)" }}
-                  >
-                    <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>R$</span>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={contribuicaoB}
-                      onChange={(e) => setContribuicaoB(e.target.value)}
-                      className="flex-1 bg-transparent outline-none text-sm font-semibold"
-                      style={{ color: "var(--text-primary)" }}
-                    />
-                  </div>
+                  <CurrencyInput value={contribuicaoB} onChange={setContribuicaoB} />
                 </div>
               )}
             </div>

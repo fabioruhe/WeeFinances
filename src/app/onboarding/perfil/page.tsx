@@ -288,9 +288,13 @@ export default function PerfilPage() {
         </button>
       </div>
 
-      <p className="text-center text-xs text-text-tertiary">
-        Respostas honestas geram melhores insights. Sem julgamentos aqui!
-      </p>
+      <button
+        type="button"
+        onClick={() => router.push("/onboarding/modo")}
+        className="w-full text-center text-sm text-text-tertiary hover:text-text-secondary transition"
+      >
+        Pular esta etapa
+      </button>
     </div>
   );
 }

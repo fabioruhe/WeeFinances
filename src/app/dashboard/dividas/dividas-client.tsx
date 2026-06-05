@@ -5,6 +5,7 @@ import {
   Plus, X, Loader2, Check, AlertTriangle, TrendingDown,
   ChevronDown, ChevronUp, Trash2, Bell, History,
 } from "lucide-react";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/toast";
 import {
   listDebts,
@@ -341,19 +342,18 @@ function PagarModal({
   onSuccess: (quitada: boolean, updated: DebtItem) => void;
 }) {
   const today = new Date().toISOString().split("T")[0];
-  const [valor, setValor] = useState(String(debt.parcelaMensal.toFixed(2)));
+  const [valor, setValor] = useState(debt.parcelaMensal);
   const [data, setData] = useState(today);
   const [saving, setSaving] = useState(false);
   const { pushToast } = useToast();
 
   const handleSubmit = async () => {
-    const v = parseFloat(valor.replace(",", "."));
-    if (isNaN(v) || v <= 0) {
+    if (valor <= 0) {
       pushToast({ title: "Informe um valor válido", type: "error" });
       return;
     }
     setSaving(true);
-    const res = await payDebt(debt.id, v, data);
+    const res = await payDebt(debt.id, valor, data);
     setSaving(false);
     if (res.ok) {
       const { debt: d, quitada } = res.data;
@@ -396,23 +396,7 @@ function PagarModal({
             <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
               Valor pago
             </label>
-            <div
-              className="flex items-center rounded-xl px-3 py-3 gap-2"
-              style={{ background: "var(--bg-secondary)", border: "1.5px solid var(--border-focus)" }}
-            >
-              <span className="text-sm" style={{ color: "var(--text-tertiary)" }}>R$</span>
-              <input
-                autoFocus
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={valor}
-                onChange={(e) => setValor(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                className="flex-1 bg-transparent outline-none text-base font-semibold"
-                style={{ color: "var(--text-primary)" }}
-              />
-            </div>
+            <CurrencyInput value={valor} onChange={setValor} />
           </div>
           <div>
             <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
@@ -552,45 +536,19 @@ function NovaDividaModal({
               <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
                 Valor total
               </label>
-              <div
-                className="flex items-center rounded-xl px-3 py-2.5 gap-1.5"
-                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
-              >
-                <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>R$</span>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={form.valor_total || ""}
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value) || 0;
-                    set("valor_total", v);
-                    if (!form.valor_restante) set("valor_restante", v);
-                  }}
-                  className="flex-1 bg-transparent outline-none text-sm font-semibold"
-                  style={{ color: "var(--text-primary)" }}
-                />
-              </div>
+              <CurrencyInput
+                value={form.valor_total}
+                onChange={(v) => {
+                  set("valor_total", v);
+                  if (!form.valor_restante) set("valor_restante", v);
+                }}
+              />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
                 Saldo devedor atual
               </label>
-              <div
-                className="flex items-center rounded-xl px-3 py-2.5 gap-1.5"
-                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
-              >
-                <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>R$</span>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={form.valor_restante || ""}
-                  onChange={(e) => set("valor_restante", parseFloat(e.target.value) || 0)}
-                  className="flex-1 bg-transparent outline-none text-sm font-semibold"
-                  style={{ color: "var(--text-primary)" }}
-                />
-              </div>
+              <CurrencyInput value={form.valor_restante} onChange={(v) => set("valor_restante", v)} />
             </div>
           </div>
 

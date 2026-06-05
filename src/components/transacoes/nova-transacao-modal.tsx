@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { X, ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
 import { CategoryPicker } from "@/components/transacoes/category-picker";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/toast";
 
 type Subcategoria = {
@@ -48,7 +49,7 @@ export function NovaTransacaoModal({
 }: Props) {
   const { pushToast } = useToast();
 
-  const [valorRaw, setValorRaw] = useState("");
+  const [valor, setValor] = useState(0);
   const [tipo, setTipo] = useState<"DESPESA" | "RECEITA">("DESPESA");
   const [descricao, setDescricao] = useState("");
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
@@ -80,7 +81,7 @@ export function NovaTransacaoModal({
     if (isOpen) {
       setTimeout(() => valorRef.current?.focus(), 100);
       // Reset
-      setValorRaw("");
+      setValor(0);
       setTipo("DESPESA");
       setDescricao("");
       setCategoriaId(null);
@@ -140,7 +141,6 @@ export function NovaTransacaoModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const valor = parseFloat(valorRaw.replace(",", "."));
     if (!valor || valor <= 0) {
       pushToast({ type: "error", title: "Valor inválido" });
       return;
@@ -262,31 +262,11 @@ export function NovaTransacaoModal({
             >
               VALOR
             </label>
-            <div className="flex items-center gap-2">
-              <span
-                className="text-2xl font-bold"
-                style={{ color: "var(--text-tertiary)" }}
-              >
-                R$
-              </span>
-              <input
-                ref={valorRef}
-                type="text"
-                inputMode="decimal"
-                placeholder="0,00"
-                value={valorRaw}
-                onChange={(e) => setValorRaw(e.target.value)}
-                className="flex-1 text-4xl font-bold bg-transparent outline-none"
-                style={{
-                  color:
-                    tipo === "RECEITA"
-                      ? "var(--success)"
-                      : "var(--text-primary)",
-                  fontFamily: "var(--font-display)",
-                  fontStyle: "italic",
-                }}
-              />
-            </div>
+            <CurrencyInput
+              value={valor}
+              onChange={setValor}
+              className="h-14 w-full rounded-[10px] border border-border bg-bg-card py-2 pl-10 pr-3 text-2xl font-bold text-text-primary outline-none transition focus:border-border-focus"
+            />
           </div>
 
           {/* 2. Tipo */}
