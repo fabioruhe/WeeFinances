@@ -3,32 +3,57 @@ import { apiRequest } from "@/lib/api-client";
 // ─── Asset Types ────────────────────────────────────────────────────────────
 
 export type AssetType =
-  | "RENDA_FIXA" | "RENDA_VARIAVEL" | "FUNDO" | "FII" | "IMOVEL"
-  | "VEICULO" | "CRIPTO" | "PREVIDENCIA" | "POUPANCA" | "OUTRO";
+  | "ACAO" | "FUNDO_INVESTIMENTO" | "FII" | "CRIPTO" | "TESOURO_DIRETO" | "RENDA_FIXA"
+  | "RENDA_VARIAVEL" | "FUNDO" | "IMOVEL" | "VEICULO" | "PREVIDENCIA" | "POUPANCA" | "OUTRO";
+
+export const TICKER_ASSET_TYPES: AssetType[] = ["ACAO", "FII", "FUNDO_INVESTIMENTO"];
+export const ACTIVE_ASSET_TYPES: AssetType[] = ["ACAO", "FUNDO_INVESTIMENTO", "FII", "CRIPTO", "TESOURO_DIRETO", "RENDA_FIXA"];
+
+export function isTickerType(tipo: AssetType): boolean {
+  return TICKER_ASSET_TYPES.includes(tipo);
+}
 
 export type AssetItem = {
   id: string;
-  nome: string;
+  nome: string | null;
   tipo: AssetType;
   instituicao: string | null;
   ticker: string | null;
+  quantidade: number | null;
+  precoUnitario: number | null;
   valorAtual: number;
   valorInvestido: number;
   rentabilidade: number;
   rentabilidadePct: number;
+  dataAquisicao: string | null;
   ativo: boolean;
   createdAt: string;
 };
 
 export type CreateAssetInput = {
-  nome: string;
   tipo: AssetType;
+  nome?: string | null;
   instituicao?: string;
   ticker?: string;
-  valor_atual: number;
-  valor_investido: number;
+  quantidade?: number;
+  preco_unitario?: number;
+  valor_atual?: number;
+  valor_investido?: number;
   data_aquisicao?: string;
   notas?: string;
+};
+
+export type PrecoMedioItem = {
+  ticker: string;
+  tipo: AssetType;
+  instituicoes: string[];
+  totalQuantidade: number;
+  totalInvestido: number;
+  precoMedio: number;
+  totalAtual: number;
+  rentabilidade: number;
+  rentabilidadePct: number;
+  compras: number;
 };
 
 // ─── Patrimônio Types ───────────────────────────────────────────────────────
@@ -173,6 +198,16 @@ export async function deleteAsset(id: string) {
   );
 }
 
+// ─── API calls: Preço Médio ─────────────────────────────────────────────────
+
+export async function fetchPrecoMedio() {
+  return apiRequest<{ items: PrecoMedioItem[] }>(
+    "/api/assets/preco-medio",
+    undefined,
+    "Não foi possível carregar o preço médio.",
+  );
+}
+
 // ─── API calls: Patrimônio ──────────────────────────────────────────────────
 
 export async function fetchPatrimonio() {
@@ -270,26 +305,34 @@ export async function fetchProjecaoAuto() {
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 export const ASSET_TYPE_LABEL: Record<AssetType, string> = {
-  RENDA_FIXA: "Renda Fixa",
+  ACAO: "Ações",
+  FUNDO_INVESTIMENTO: "Fundos de Investimentos",
+  FII: "Fundos Imobiliários",
+  CRIPTO: "Criptomoedas",
+  TESOURO_DIRETO: "Tesouro Direto",
+  RENDA_FIXA: "Renda Fixa (CDB, CDI, LCA, LCI)",
+  // Deprecated — mantidos para exibição de dados existentes
   RENDA_VARIAVEL: "Renda Variável",
   FUNDO: "Fundos",
-  FII: "Fundos Imobiliários",
   IMOVEL: "Imóveis",
   VEICULO: "Veículos",
-  CRIPTO: "Cripto",
   PREVIDENCIA: "Previdência",
   POUPANCA: "Poupança",
   OUTRO: "Outros",
 };
 
 export const ASSET_TYPE_COLOR: Record<AssetType, string> = {
+  ACAO: "#2563eb",
+  FUNDO_INVESTIMENTO: "#7c3aed",
+  FII: "#e67e22",
+  CRIPTO: "#f59e0b",
+  TESOURO_DIRETO: "#059669",
   RENDA_FIXA: "var(--brand-primary)",
+  // Deprecated
   RENDA_VARIAVEL: "var(--brand-secondary)",
   FUNDO: "var(--partner-shared)",
-  FII: "#e67e22",
   IMOVEL: "var(--brand-accent)",
-  VEICULO: "var(--warning, #f59e0b)",
-  CRIPTO: "var(--info, #3b82f6)",
+  VEICULO: "#94a3b8",
   PREVIDENCIA: "var(--success)",
   POUPANCA: "var(--text-tertiary)",
   OUTRO: "var(--border)",

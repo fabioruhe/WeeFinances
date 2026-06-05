@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, ArrowUpCircle, ArrowDownCircle, Calendar } from "lucide-react";
+import { X, ArrowUpCircle, ArrowDownCircle, Calendar, Repeat, CreditCard, Receipt } from "lucide-react";
 import { CategoryPicker } from "@/components/transacoes/category-picker";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { useToast } from "@/components/ui/toast";
@@ -57,6 +57,11 @@ export function NovaTransacaoModal({
   const [escopo, setEscopo] = useState<"INDIVIDUAL" | "COMPARTILHADA">("INDIVIDUAL");
   const [data, setData] = useState(toISODate(new Date()));
   const [loading, setLoading] = useState(false);
+  const [modo, setModo] = useState<"UNICA" | "FIXA" | "PARCELADA">("UNICA");
+  const [parcelas, setParcelas] = useState(3);
+  const [meses, setMeses] = useState(12);
+  const [valorEhTotal, setValorEhTotal] = useState(true);
+  const [diaVencimento, setDiaVencimento] = useState<number | null>(null);
 
   // Sugestão de categoria
   const [sugestao, setSugestao] = useState<{
@@ -91,6 +96,11 @@ export function NovaTransacaoModal({
       setSugestao(null);
       setSugerida(false);
       setPendingRule(null);
+      setModo("UNICA");
+      setParcelas(3);
+      setMeses(12);
+      setValorEhTotal(true);
+      setDiaVencimento(null);
     }
   }, [isOpen]);
 
@@ -169,6 +179,10 @@ export function NovaTransacaoModal({
           subcategoriaId: subcategoriaId ?? null,
           descricao,
           data,
+          modo,
+          ...(modo === "PARCELADA" ? { parcelas, valorEhTotal } : {}),
+          ...(modo === "FIXA" ? { meses } : {}),
+          ...(modo !== "UNICA" && diaVencimento ? { diaVencimento } : {}),
         }),
       });
 
@@ -176,6 +190,17 @@ export function NovaTransacaoModal({
 
       if (!res.ok) {
         throw new Error(json.error ?? "Erro ao salvar");
+      }
+
+      // Toast de série criada
+      if (json.totalCriadas > 1) {
+        pushToast({
+          type: "success",
+          title: `${json.totalCriadas} transações criadas`,
+          description: modo === "PARCELADA"
+            ? `${parcelas}x de ${fmt(String(valorEhTotal ? valor / parcelas : valor))}`
+            : `${meses} meses de ${fmt(String(valor))}`,
+        });
       }
 
       // Mostrar toast de anomalia (não bloqueante)
@@ -317,7 +342,138 @@ export function NovaTransacaoModal({
             </button>
           </div>
 
-          {/* 3. Descrição */}
+          {/* 3. Modo (Única / Fixa / Parcelada) */}
+          <div className="flex flex-col gap-1.5">
+            <label
+              className="text-xs font-semibold"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              MODO
+            </label>
+            <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: "var(--border)" }}>
+              {([
+                { key: "UNICA", label: "Única", icon: <Receipt size={14} /> },
+                { key: "FIXA", label: "Fixa", icon: <Repeat size={14} /> },
+                { key: "PARCELADA", label: "Parcelada", icon: <CreditCard size={14} /> },
+              ] as const).map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setModo(m.key)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold transition-all"
+                  style={{
+                    background: modo === m.key ? "var(--brand-primary)" : "var(--bg-secondary)",
+                    color: modo === m.key ? "white" : "var(--text-tertiary)",
+                  }}
+                >
+                  {m.icon} {m.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Campos condicionais */}
+            {modo === "FIXA" && (
+              <div className="flex gap-3 mt-2">
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-xs" style={{ color: "var(--text-tertiary)" }}>Por quantos meses?</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={24}
+                    value={meses}
+                    onChange={(e) => setMeses(Math.max(1, Math.min(24, Number(e.target.value))))}
+                    className="px-3 py-2 rounded-lg text-sm outline-none border"
+                    style={{ background: "var(--bg-secondary)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1 flex-1">
+                  <label className="text-xs" style={{ color: "var(--text-tertiary)" }}>Dia do vencimento</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={diaVencimento ?? ""}
+                    placeholder="Mesmo da data"
+                    onChange={(e) => setDiaVencimento(e.target.value ? Number(e.target.value) : null)}
+                    className="px-3 py-2 rounded-lg text-sm outline-none border"
+                    style={{ background: "var(--bg-secondary)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {modo === "PARCELADA" && (
+              <div className="space-y-2 mt-2">
+                <div className="flex gap-3">
+                  <div className="flex flex-col gap-1 flex-1">
+                    <label className="text-xs" style={{ color: "var(--text-tertiary)" }}>Em quantas parcelas?</label>
+                    <input
+                      type="number"
+                      min={2}
+                      max={60}
+                      value={parcelas}
+                      onChange={(e) => setParcelas(Math.max(2, Math.min(60, Number(e.target.value))))}
+                      className="px-3 py-2 rounded-lg text-sm outline-none border"
+                      style={{ background: "var(--bg-secondary)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 flex-1">
+                    <label className="text-xs" style={{ color: "var(--text-tertiary)" }}>Dia do vencimento</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={31}
+                      value={diaVencimento ?? ""}
+                      placeholder="Mesmo da data"
+                      onChange={(e) => setDiaVencimento(e.target.value ? Number(e.target.value) : null)}
+                      className="px-3 py-2 rounded-lg text-sm outline-none border"
+                      style={{ background: "var(--bg-secondary)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                    />
+                  </div>
+                </div>
+                <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: "var(--border)" }}>
+                  <button
+                    type="button"
+                    onClick={() => setValorEhTotal(true)}
+                    className="flex-1 py-2 text-xs font-semibold transition-all"
+                    style={{
+                      background: valorEhTotal ? "var(--brand-primary)" : "var(--bg-secondary)",
+                      color: valorEhTotal ? "white" : "var(--text-tertiary)",
+                    }}
+                  >
+                    Valor total
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setValorEhTotal(false)}
+                    className="flex-1 py-2 text-xs font-semibold transition-all"
+                    style={{
+                      background: !valorEhTotal ? "var(--brand-primary)" : "var(--bg-secondary)",
+                      color: !valorEhTotal ? "white" : "var(--text-tertiary)",
+                    }}
+                  >
+                    Valor da parcela
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Preview */}
+            {modo === "FIXA" && valor > 0 && (
+              <p className="text-xs mt-1" style={{ color: "var(--brand-primary)" }}>
+                {fmt(String(valor))}/mês por {meses} meses
+              </p>
+            )}
+            {modo === "PARCELADA" && valor > 0 && (
+              <p className="text-xs mt-1" style={{ color: "var(--brand-primary)" }}>
+                {valorEhTotal
+                  ? `${parcelas}x de ${fmt(String(valor / parcelas))}`
+                  : `${parcelas}x de ${fmt(String(valor))} (total: ${fmt(String(valor * parcelas))})`}
+              </p>
+            )}
+          </div>
+
+          {/* 4. Descrição */}
           <div className="flex flex-col gap-1.5">
             <label
               className="text-xs font-semibold"
@@ -439,7 +595,7 @@ export function NovaTransacaoModal({
                 <input
                   type="date"
                   value={data}
-                  max={toISODate(new Date())}
+                  {...(modo === "UNICA" ? { max: toISODate(new Date()) } : {})}
                   onChange={(e) => setData(e.target.value)}
                   className="bg-transparent text-sm outline-none flex-1"
                   style={{ color: "var(--text-primary)" }}

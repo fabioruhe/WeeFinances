@@ -122,13 +122,18 @@ enum ImportType {
 }
 
 enum AssetType {
+  // Ativos
+  ACAO
+  FUNDO_INVESTIMENTO
+  FII
+  CRIPTO
+  TESOURO_DIRETO
   RENDA_FIXA
+  // Deprecated (mantidos para dados existentes)
   RENDA_VARIAVEL
   FUNDO
-  FII
   IMOVEL
   VEICULO
-  CRIPTO
   PREVIDENCIA
   POUPANCA
   OUTRO
@@ -328,6 +333,10 @@ model Transaction {
   reviewed       Boolean           @default(false)
   anomalia       Boolean           @default(false)
   categoriaFonte CategoriaFonte?
+  recorrenciaId  String?
+  parcelaAtual   Int?
+  parcelasTotal  Int?
+  isRecorrente   Boolean           @default(false)
   deletedAt      DateTime?
   creditCardId   String?
   installmentId  String?
@@ -349,6 +358,7 @@ model Transaction {
   @@index([coupleId, data])
   @@index([creditCardId])
   @@index([installmentId])
+  @@index([recorrenciaId])
 }
 
 // ─── CreditCard ──────────────────────────────────────────────────────────────
@@ -652,10 +662,12 @@ model Asset {
   id             String    @id @default(uuid())
   userId         String
   coupleId       String?
-  nome           String
+  nome           String?
   tipo           AssetType
   instituicao    String?
   ticker         String?
+  quantidade     Decimal?  @db.Decimal(14, 6)
+  precoUnitario  Decimal?  @db.Decimal(14, 2)
   valorAtual     Decimal   @db.Decimal(14, 2)
   valorInvestido Decimal   @db.Decimal(14, 2)
   dataAquisicao  DateTime? @db.Date

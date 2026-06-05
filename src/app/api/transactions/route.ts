@@ -23,8 +23,13 @@ const CreateTransactionSchema = z.object({
     .max(200, "Descrição muito longa"),
   data: z.string().refine((d) => {
     const date = new Date(d);
-    return !isNaN(date.getTime()) && date <= new Date();
-  }, "Data inválida ou futura"),
+    return !isNaN(date.getTime());
+  }, "Data inválida"),
+  modo: z.enum(["UNICA", "FIXA", "PARCELADA"]).default("UNICA"),
+  parcelas: z.number().int().min(2).max(60).optional(),
+  meses: z.number().int().min(1).max(24).optional(),
+  valorEhTotal: z.boolean().optional(),
+  diaVencimento: z.number().int().min(1).max(31).optional(),
 });
 
 // ─── GET /api/transactions ────────────────────────────────────────────────────
@@ -134,10 +139,31 @@ export async function POST(req: NextRequest) {
     escopo,
     descricao,
     data: dataStr,
+    modo = "UNICA",
+    parcelas,
+    meses,
+    valorEhTotal,
+    diaVencimento,
   } = parsed.data;
 
   let { categoriaId, subcategoriaId } = parsed.data;
   const data = new Date(dataStr);
+
+  // Validações de modo
+  if (modo === "PARCELADA" && (!parcelas || parcelas < 2)) {
+    return NextResponse.json(
+      { error: "Número de parcelas obrigatório (mínimo 2)" },
+      { status: 422 }
+    );
+  }
+
+  // Para UNICA, validar que data não é futura
+  if (modo === "UNICA" && data > new Date()) {
+    return NextResponse.json(
+      { error: "Data não pode ser futura para transação única" },
+      { status: 422 }
+    );
+  }
 
   // Escopo COMPARTILHADA requer casal
   if (escopo === "COMPARTILHADA" && !isCouple) {
@@ -256,43 +282,106 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Salvar transação ──────────────────────────────────────────────────────
-  const transaction = await prisma.transaction.create({
-    data: {
-      userId: user.id,
-      coupleId: escopo === "COMPARTILHADA" ? coupleId : null,
-      valor,
-      tipo,
-      escopo,
-      categoriaId: categoriaId ?? null,
-      subcategoriaId: subcategoriaId ?? null,
-      descricao,
-      data,
-      categoriaFonte,
-    },
-    select: {
-      id: true,
-      valor: true,
-      tipo: true,
-      escopo: true,
-      descricao: true,
-      data: true,
-      reviewed: true,
-      anomalia: true,
-      categoriaFonte: true,
-      categoria: { select: { id: true, nome: true, icone: true } },
-      subcategoria: { select: { id: true, nome: true, icone: true } },
-    },
-  });
+  // ── Salvar transação(ões) ─────────────────────────────────────────────────
+  const txSelect = {
+    id: true,
+    valor: true,
+    tipo: true,
+    escopo: true,
+    descricao: true,
+    data: true,
+    reviewed: true,
+    anomalia: true,
+    categoriaFonte: true,
+    recorrenciaId: true,
+    parcelaAtual: true,
+    parcelasTotal: true,
+    isRecorrente: true,
+    categoria: { select: { id: true, nome: true, icone: true } },
+    subcategoria: { select: { id: true, nome: true, icone: true } },
+  };
+
+  const baseData = {
+    userId: user.id,
+    coupleId: escopo === "COMPARTILHADA" ? coupleId : null,
+    tipo,
+    escopo,
+    categoriaId: categoriaId ?? null,
+    subcategoriaId: subcategoriaId ?? null,
+    categoriaFonte,
+  };
+
+  let transaction;
+  let totalCriadas = 1;
+
+  if (modo === "UNICA") {
+    // Comportamento original
+    transaction = await prisma.transaction.create({
+      data: { ...baseData, valor, descricao, data },
+      select: txSelect,
+    });
+  } else {
+    // Gerar série (FIXA ou PARCELADA)
+    const recorrenciaId = crypto.randomUUID();
+    const n = modo === "PARCELADA" ? parcelas! : (meses ?? 12);
+    const valorParcela = modo === "PARCELADA" && valorEhTotal
+      ? Math.round((valor / n) * 100) / 100
+      : valor;
+
+    const dia = diaVencimento ?? data.getUTCDate();
+    const txDatas: { data: Date; descricao: string; parcelaAtual: number | null; parcelasTotal: number | null; isRecorrente: boolean }[] = [];
+
+    for (let i = 0; i < n; i++) {
+      const txDate = new Date(data.getUTCFullYear(), data.getUTCMonth() + i, 1);
+      // Ajustar dia (lidar com meses que não têm o dia escolhido)
+      const lastDay = new Date(txDate.getFullYear(), txDate.getMonth() + 1, 0).getDate();
+      txDate.setDate(Math.min(dia, lastDay));
+
+      const txDescricao = modo === "PARCELADA"
+        ? `${descricao} (${i + 1}/${n})`
+        : descricao;
+
+      txDatas.push({
+        data: txDate,
+        descricao: txDescricao,
+        parcelaAtual: modo === "PARCELADA" ? i + 1 : null,
+        parcelasTotal: modo === "PARCELADA" ? n : null,
+        isRecorrente: modo === "FIXA",
+      });
+    }
+
+    // Criar todas em batch
+    await prisma.transaction.createMany({
+      data: txDatas.map((td) => ({
+        ...baseData,
+        valor: valorParcela,
+        descricao: td.descricao,
+        data: td.data,
+        recorrenciaId,
+        parcelaAtual: td.parcelaAtual,
+        parcelasTotal: td.parcelasTotal,
+        isRecorrente: td.isRecorrente,
+      })),
+    });
+
+    totalCriadas = n;
+
+    // Buscar a primeira transação criada para retornar
+    transaction = await prisma.transaction.findFirst({
+      where: { recorrenciaId },
+      orderBy: { data: "asc" },
+      select: txSelect,
+    });
+  }
 
   // ── Estratégia 6: Detecção de anomalia (após salvar) ─────────────────────
   let anomalia = false;
-  if (tipo === "DESPESA" && categoriaId) {
+  if (tipo === "DESPESA" && categoriaId && transaction) {
     anomalia = await detectarAnomalia(
       user.id,
       coupleId,
       categoriaId,
-      valor,
+      modo === "UNICA" ? valor : (modo === "PARCELADA" && valorEhTotal ? Math.round((valor / (parcelas ?? 1)) * 100) / 100 : valor),
       data
     );
 
@@ -306,7 +395,8 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json(
     {
-      transaction: { ...transaction, anomalia },
+      transaction: transaction ? { ...transaction, anomalia } : null,
+      totalCriadas,
       sugestao_regra: sugestaoRegra,
       anomalia,
       divisao: divisaoInfo,
